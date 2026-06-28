@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sanskarjain/authorization/database"

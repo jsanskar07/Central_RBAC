@@ -7,10 +7,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/sanskarjain/authorization/database"
+	"github.com/sanskarjain/authorization/models"
 )
 
 var (
