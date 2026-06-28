@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: central-auth-api
+    ports:
+      - "9000:9000"
+    environment:
+      - GIN_MODE=release
+      - PORT=9000
+      # Connects to the postgres service below using Docker's internal network
+      - DATABASE_URL=host=postgres user=authuser password=authpassword dbname=auth_db port=5432 sslmode=disable
+      # Passed in from the server's host environment or a .env file
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: central-auth-db
+    environment:
+      - POSTGRES_USER=authuser
+      - POSTGRES_PASSWORD=authpassword
+      - POSTGRES_DB=auth_db
+    ports:
+      - "5432:5432" # Expose if you need to connect externally via pgAdmin/DataGrip
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authuser -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
