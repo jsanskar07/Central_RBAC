@@ -14,6 +14,9 @@ func SetupRoutes(router *gin.Engine) {
 		api.GET("/projects", controllers.GetProjects)
 		api.POST("/projects/:id/api-key", controllers.GenerateAPIKey)
 
+		// Public Key
+		api.GET("/auth/public-key", controllers.GetPublicKey)
+
 		// Protected Routes
 		protected := api.Group("/")
 		protected.Use(middleware.RequireAPIKey())
