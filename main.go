@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sanskarjain/authorization/database"
 	"github.com/sanskarjain/authorization/routes"
+	"github.com/sanskarjain/authorization/utils"
 )
 
 func main() {
@@ -23,6 +24,11 @@ func main() {
 	
 	database.ConnectDB(dsn)
 	database.Migrate()
+
+	if err := utils.InitKeys(); err != nil {
+		fmt.Printf("Fatal: failed to init RSA keys: %v\n", err)
+		os.Exit(1)
+	}
 
 	fmt.Println("Central Authorization System started.")
 

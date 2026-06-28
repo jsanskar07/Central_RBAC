@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sanskarjain/authorization/database"
@@ -79,4 +80,14 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// GetPublicKey serves the RSA public key for verification by external services
+func GetPublicKey(c *gin.Context) {
+	pubData, err := os.ReadFile("public_key.pem")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read public key"})
+		return
+	}
+	c.String(http.StatusOK, string(pubData))
 }
