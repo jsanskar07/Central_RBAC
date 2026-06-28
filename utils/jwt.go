@@ -18,31 +18,25 @@ var (
 	PublicKey  *rsa.PublicKey
 )
 
-// InitKeys loads the RSA keys from disk, or generates a new pair if they don't exist.
+// InitKeys loads the RSA keys from the database, or generates a new pair if they don't exist.
 func InitKeys() error {
-	privFile := "private_key.pem"
-	pubFile := "public_key.pem"
+	var authKey models.AuthKey
+	result := database.DB.First(&authKey)
 
-	// Check if keys already exist
-	if _, err := os.Stat(privFile); errors.Is(err, os.ErrNotExist) {
+	if result.Error != nil {
 		// Generate new RSA key pair
-		fmt.Println("Generating new RSA-2048 key pair...")
+		fmt.Println("Generating new RSA-2048 key pair and saving to database...")
 		priv, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			return fmt.Errorf("failed to generate RSA key: %v", err)
 		}
 
-		// Save Private Key
 		privBytes := x509.MarshalPKCS1PrivateKey(priv)
 		privPEM := pem.EncodeToMemory(&pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: privBytes,
 		})
-		if err := os.WriteFile(privFile, privPEM, 0600); err != nil {
-			return fmt.Errorf("failed to write private key: %v", err)
-		}
 
-		// Save Public Key
 		pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 		if err != nil {
 			return fmt.Errorf("failed to marshal public key: %v", err)
@@ -51,18 +45,21 @@ func InitKeys() error {
 			Type:  "PUBLIC KEY",
 			Bytes: pubBytes,
 		})
-		if err := os.WriteFile(pubFile, pubPEM, 0644); err != nil {
-			return fmt.Errorf("failed to write public key: %v", err)
+
+		authKey = models.AuthKey{
+			PrivateKey: string(privPEM),
+			PublicKey:  string(pubPEM),
 		}
-		fmt.Println("Keys generated successfully.")
+		if err := database.DB.Create(&authKey).Error; err != nil {
+			return fmt.Errorf("failed to save keys to database: %v", err)
+		}
+		fmt.Println("Keys generated and saved to database successfully.")
+	} else {
+		fmt.Println("Loaded existing RSA keys from database.")
 	}
 
 	// Load Private Key
-	privData, err := os.ReadFile(privFile)
-	if err != nil {
-		return fmt.Errorf("failed to read private key file: %v", err)
-	}
-	privBlock, _ := pem.Decode(privData)
+	privBlock, _ := pem.Decode([]byte(authKey.PrivateKey))
 	if privBlock == nil {
 		return errors.New("failed to decode PEM block containing private key")
 	}
@@ -73,11 +70,7 @@ func InitKeys() error {
 	privateKey = priv
 
 	// Load Public Key
-	pubData, err := os.ReadFile(pubFile)
-	if err != nil {
-		return fmt.Errorf("failed to read public key file: %v", err)
-	}
-	pubBlock, _ := pem.Decode(pubData)
+	pubBlock, _ := pem.Decode([]byte(authKey.PublicKey))
 	if pubBlock == nil {
 		return errors.New("failed to decode PEM block containing public key")
 	}

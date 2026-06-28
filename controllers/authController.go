@@ -112,10 +112,10 @@ func Login(c *gin.Context) {
 
 // GetPublicKey serves the RSA public key for verification by external services
 func GetPublicKey(c *gin.Context) {
-	pubData, err := os.ReadFile("public_key.pem")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read public key"})
+	var authKey models.AuthKey
+	if err := database.DB.First(&authKey).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read public key from database"})
 		return
 	}
-	c.String(http.StatusOK, string(pubData))
+	c.String(http.StatusOK, authKey.PublicKey)
 }

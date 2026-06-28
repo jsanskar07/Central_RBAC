@@ -30,6 +30,7 @@ func Migrate() {
 		&models.Permission{},
 		&models.RolePermission{},
 		&models.UserRole{},
+		&models.AuthKey{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
