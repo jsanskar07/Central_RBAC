@@ -1,0 +1,9 @@
+.env
+authorization
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
